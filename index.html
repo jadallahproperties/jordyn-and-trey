@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coconut Grove Market Report -- For Jordyn & Trey</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #091710;
+  --mid: #0F2018;
+  --card: #152B1E;
+  --card2: #1B3527;
+  --border: rgba(160,210,150,0.12);
+  --gold: #C8A455;
+  --gold2: #E2C880;
+  --cream: #F4EDD8;
+  --muted: #A8B89A;
+  --teal: #5BA08A;
+  --blue: #5B9ED0;
+  --coral: #D4644A;
+  --font-d: 'Cormorant Garamond', Georgia, serif;
+  --font-b: 'DM Sans', system-ui, sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--cream);font-family:var(--font-b);font-size:15px;line-height:1.65;overflow-x:hidden}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--card2);border-radius:4px}
+
+/* NAV */
+nav{
+position:sticky;top:0;z-index:900;
+background:rgba(9,23,16,0.96);
+backdrop-filter:blur(14px);
+border-bottom:1px solid var(--border);
+padding:14px 48px;
+display:flex;align-items:center;justify-content:space-between;
+}
+.nav-brand{font-family:var(--font-d);font-size:20px;color:var(--gold);letter-spacing:.4px}
+.nav-meta{font-size:11.5px;color:var(--muted);letter-spacing:.8px;text-align:right}
+.nav-meta strong{color:var(--gold2);display:block;font-size:12px}
+
+/* HERO */
+.hero{
+padding:90px 48px 50px;
+position:relative;overflow:hidden;
+}
+.hero::after{
+content:'';position:absolute;
+top:-200px;right:-150px;
+width:700px;height:700px;
+background:radial-gradient(circle,rgba(200,164,85,.07) 0%,transparent 68%);
+pointer-events:none;
+}
+.hero-eyebrow{
+font-size:11px;letter-spacing:3.5px;text-transform:uppercase;
+color:var(--gold);margin-bottom:18px;display:flex;align-items:center;gap:12px;
+}
+.hero-eyebrow::after{content:'';flex:1;max-width:60px;height:1px;background:var(--gold);opacity:.5}
+.hero h1{
+font-family:var(--font-d);
+font-size:clamp(50px,6.5vw,88px);
+font-weight:700;line-height:1.02;
+color:var(--cream);margin-bottom:28px;max-width:780px;
+}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero-note{
+max-width:560px;font-size:17px;line-height:1.8;
+color:var(--muted);margin-bottom:48px;
+padding-left:22px;border-left:2px solid rgba(200,164,85,.5);
+}
+.hero-note strong{color:var(--cream)}
+
+/* STATS */
+.stats-band{
+display:grid;grid-template-columns:repeat(5,1fr);
+margin:0 48px 64px;
+border:1px solid var(--border);border-radius:10px;
+overflow:hidden;background:var(--border);gap:1px;
+}
+.stat{
+background:var(--mid);padding:30px 20px;text-align:center;
+transition:background .25s;
+}
+.stat:hover{background:var(--card)}
+.stat-val{
+font-family:var(--font-d);font-size:36px;font-weight:700;
+color:var(--gold);line-height:1;margin-bottom:7px;
+}
+.stat-lbl{font-size:10.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted)}
+
+/* SECTIONS */
+section{padding:0 48px 70px}
+.sec-head{margin-bottom:32px}
+.sec-num{font-size:10.5px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.sec-title{font-family:var(--font-d);font-size:38px;font-weight:600;color:var(--cream)}
+.sec-sub{font-size:14px;color:var(--muted);margin-top:6px}
+
+/* MAP */
+#map{width:100%;height:540px;border-radius:12px;border:1px solid var(--border)}
+.map-legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:16px}
+.leg{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.leg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.chart-card{background:var(--mid);border:1px solid var(--border);border-radius:12px;padding:26px}
+.chart-card.span2{grid-column:span 2}
+.chart-ttl{font-family:var(--font-d);font-size:20px;font-weight:600;color:var(--cream);margin-bottom:3px}
+.chart-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.ch-wrap{position:relative;height:230px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table.prop{width:100%;border-collapse:collapse;font-size:13px}
+table.prop thead{background:var(--card2)}
+table.prop th{
+padding:14px 14px;text-align:left;
+font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;
+color:var(--gold);white-space:nowrap;font-weight:600;
+cursor:pointer;user-select:none;border-bottom:1px solid var(--border);
+}
+table.prop th:hover{color:var(--gold2)}
+table.prop tbody tr{border-top:1px solid var(--border);transition:background .15s}
+table.prop tbody tr:hover{background:rgba(27,53,39,.6)}
+table.prop td{padding:11px 14px;vertical-align:middle;color:var(--cream)}
+table.prop td.dim{color:var(--muted)}
+.vlink{
+display:inline-block;padding:4px 11px;
+border:1px solid rgba(200,164,85,.5);border-radius:4px;
+color:var(--gold);text-decoration:none;font-size:11px;
+letter-spacing:.3px;transition:all .2s;white-space:nowrap;
+}
+.vlink:hover{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.badge{
+font-size:9.5px;padding:2px 7px;border-radius:3px;
+font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+}
+.b-sfh{background:rgba(91,160,138,.18);color:var(--teal)}
+.b-condo{background:rgba(200,164,85,.18);color:var(--gold)}
+.b-land{background:rgba(212,100,74,.18);color:var(--coral)}
+
+/* FOOTER */
+footer{
+border-top:1px solid var(--border);
+padding:44px 48px;text-align:center;
+font-size:12.5px;color:var(--muted);line-height:2;
+}
+footer .sig{
+font-family:var(--font-d);font-size:24px;
+color:var(--gold);margin-bottom:8px;font-style:italic;
+}
+
+/* LEAFLET POPUP */
+.leaflet-popup-content-wrapper{
+background:#162A1F;color:var(--cream);
+border:1px solid rgba(200,164,85,.3);
+border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.6);
+padding:0;overflow:hidden;
+}
+.leaflet-popup-tip{background:#162A1F}
+.leaflet-popup-content{margin:0;padding:16px 18px 14px}
+.pu-addr{font-size:12px;font-weight:600;color:var(--gold2);margin-bottom:4px}
+.pu-price{font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--gold);margin-bottom:5px}
+.pu-detail{font-size:12px;color:var(--muted);margin-bottom:10px}
+.pu-lnk{font-size:11.5px;color:var(--teal);text-decoration:none;border-bottom:1px solid rgba(91,160,138,.4)}
+.pu-lnk:hover{color:var(--cream)}
+
+.comp-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+
+@media(max-width:960px){
+nav,.hero,section,footer{padding-left:20px;padding-right:20px}
+.stats-band{grid-template-columns:repeat(2,1fr);margin:0 20px 48px}
+.charts-grid{grid-template-columns:1fr}
+.chart-card.span2{grid-column:span 1}
+.hero h1{font-size:42px}
+.comp-cards{grid-template-columns:1fr}
+}
+</style>
+
+</head>
+<body>
+
+<!-- NAV -->
+
+<nav>
+  <div>
+    <div class="nav-brand">Coconut Grove · Market Intelligence</div>
+  </div>
+  <div class="nav-meta">
+    Prepared exclusively for Jordyn & Trey
+    <strong>76 Sales · Apr 2025 -- Apr 2026</strong>
+  </div>
+</nav>
+
+<!-- HERO -->
+
+<div class="hero">
+  <div class="hero-eyebrow">Personal Market Report · Coconut Grove, Miami FL</div>
+  <h1>The Grove is<br><em>still calling.</em></h1>
+  <p class="hero-note">
+    Losing out on a home you loved stings -- but it's proof you know exactly what you want. 
+    Over the past 12 months, <strong>76 homes traded hands in Coconut Grove</strong> -- each one proof that deals happen here, every single week. 
+    Your home is inside this data. It's only a matter of time.
+  </p>
+</div>
+
+<!-- STATS BAND -->
+
+<div class="stats-band" id="statsRow">
+  <div class="stat"><div class="stat-val" id="s-total">76</div><div class="stat-lbl">Total Sales</div></div>
+  <div class="stat"><div class="stat-val" id="s-median">--</div><div class="stat-lbl">Median Price</div></div>
+  <div class="stat"><div class="stat-val" id="s-ppsf">--</div><div class="stat-lbl">Avg $/Sq Ft</div></div>
+  <div class="stat"><div class="stat-val" id="s-sqft">--</div><div class="stat-lbl">Avg Home Size</div></div>
+  <div class="stat"><div class="stat-val" id="s-range">--</div><div class="stat-lbl">Price Range</div></div>
+</div>
+
+<!-- SPOTLIGHT COMPS -->
+
+<section style="padding-bottom:20px">
+  <div class="sec-head">
+    <div class="sec-num">★ Spotlight</div>
+    <h2 class="sec-title">Three Sales Worth Knowing</h2>
+    <p class="sec-sub">Vintage 4-bedroom homes in North Grove that closed in the last 12 months -- the clearest window into what the market delivers at your price point.</p>
+  </div>
+  <div class="comp-cards">
+
+```
+<div style="background:var(--card);border:1px solid rgba(200,164,85,.3);border-radius:12px;padding:26px;position:relative;overflow:hidden">
+  <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#C8A455,#E2C880)"></div>
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Best Size Match</div>
+  <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--gold);margin-bottom:4px">$2,850,000</div>
+  <div style="font-size:14px;font-weight:600;color:var(--cream);margin-bottom:14px">3765 Carmen Ct  ·  Jan 2026</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Beds / Baths</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">4 bd / 3 ba</div>
+    </div>
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Living SF</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">2,622 SF</div>
+    </div>
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Lot Size</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">8,400 SF</div>
+    </div>
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Year Built</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">1936</div>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">Vintage character, nearly identical square footage to properties in this range. Sold at $1,087/sf -- a clear data point for what the market bears.</div>
+  <a href="https://www.redfin.com/FL/Miami/3765-Carmen-Ct-33133/home/42753973" target="_blank" rel="noopener" class="vlink">View on Redfin →</a>
+</div>
+
+<div style="background:var(--card);border:1px solid rgba(91,160,138,.3);border-radius:12px;padding:26px;position:relative;overflow:hidden">
+  <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#5BA08A,#7ECBB5)"></div>
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:10px">Best Lot Match</div>
+  <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--gold);margin-bottom:4px">$2,400,000</div>
+  <div style="font-size:14px;font-weight:600;color:var(--cream);margin-bottom:14px">2478 Inagua Ave  ·  Sep 2025</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Beds / Baths</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">4 bd / 3.5 ba</div>
+    </div>
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Living SF</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">2,072 SF</div>
+    </div>
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Lot Size</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">6,488 SF</div>
+    </div>
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Year Built</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">1924</div>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">Lot size nearly identical, same era, exact bed/bath config. Smaller living area kept it at $2.4M -- but at $1,158/sf it validates pricing power for well-finished historic homes.</div>
+  <a href="https://www.redfin.com/FL/Miami/2478-Inagua-Ave-33133/home/42755459" target="_blank" rel="noopener" class="vlink">View on Redfin →</a>
+</div>
+
+<div style="background:var(--card);border:1px solid rgba(91,158,208,.3);border-radius:12px;padding:26px;position:relative;overflow:hidden">
+  <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#5B9ED0,#82BFE8)"></div>
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:10px">Best Config Match</div>
+  <div style="font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--gold);margin-bottom:4px">$2,600,000</div>
+  <div style="font-size:14px;font-weight:600;color:var(--cream);margin-bottom:14px">2210 Overbrook St  ·  Jun 2025</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Beds / Baths</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">4 bd / 3.5 ba</div>
+    </div>
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Living SF</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">3,113 SF</div>
+    </div>
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Lot Size</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">9,000 SF</div>
+    </div>
+    <div style="background:var(--card2);border-radius:6px;padding:10px 12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Year Built</div>
+      <div style="font-size:15px;font-weight:600;color:var(--cream)">1950</div>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">Exact 4bd/3.5ba match with a larger footprint and lot. Closed at $835/sf -- shows the floor for vintage 4-bedroom homes and how much room quality finishes add.</div>
+  <a href="https://www.redfin.com/FL/Miami/2210-Overbrook-St-33133/home/42752504" target="_blank" rel="noopener" class="vlink">View on Redfin →</a>
+</div>
+```
+
+  </div><!-- /comp-cards -->
+</section>
+
+<!-- MAP -->
+
+<section>
+  <div class="sec-head">
+    <div class="sec-num">01 -- The Map</div>
+    <h2 class="sec-title">All 76 Sales, Pinned</h2>
+    <p class="sec-sub">Click any pin to see details and jump to the full Redfin listing.</p>
+  </div>
+  <div id="map"></div>
+  <div class="map-legend">
+    <div class="leg"><div class="leg-dot" style="background:#4CAF88"></div>Under $2M</div>
+    <div class="leg"><div class="leg-dot" style="background:#5B9ED0"></div>$2M -- $2.5M</div>
+    <div class="leg"><div class="leg-dot" style="background:#C8A455"></div>$2.5M -- $3M</div>
+    <div class="leg"><div class="leg-dot" style="background:#D4644A"></div>Over $3M</div>
+  </div>
+</section>
+
+<!-- CHARTS -->
+
+<section>
+  <div class="sec-head">
+    <div class="sec-num">02 -- Market Analytics</div>
+    <h2 class="sec-title">Six Ways to Read the Market</h2>
+    <p class="sec-sub">Price distribution, $/sqft, home sizes, bedroom counts, monthly volume, and vintage -- all from real sales.</p>
+  </div>
+  <div class="charts-grid">
+
+```
+<div class="chart-card span2">
+  <div class="chart-ttl">Sales by Price Range</div>
+  <div class="chart-sub">Where the action is -- count of closings in each bucket</div>
+  <div class="ch-wrap"><canvas id="cPriceRange"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-ttl">Price per Sq Ft</div>
+  <div class="chart-sub">Distribution across all sales with sqft data</div>
+  <div class="ch-wrap"><canvas id="cPPSF"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-ttl">Home Size Breakdown</div>
+  <div class="chart-sub">Square footage of sold homes</div>
+  <div class="ch-wrap"><canvas id="cSqft"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-ttl">Bedroom Count</div>
+  <div class="chart-sub">What configuration sells most?</div>
+  <div class="ch-wrap"><canvas id="cBeds"></canvas></div>
+</div>
+
+<div class="chart-card span2">
+  <div class="chart-ttl">Monthly Closing Volume</div>
+  <div class="chart-sub">When homes closed over the past 12 months</div>
+  <div class="ch-wrap"><canvas id="cMonthly"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-ttl">Year Built Era</div>
+  <div class="chart-sub">Historic character vs. new construction</div>
+  <div class="ch-wrap"><canvas id="cEra"></canvas></div>
+</div>
+```
+
+  </div>
+</section>
+
+<!-- TABLE -->
+
+<section>
+  <div class="sec-head">
+    <div class="sec-num">03 -- The Listings</div>
+    <h2 class="sec-title">Every Sale, Full Detail</h2>
+    <p class="sec-sub">Click any column header to sort. Hit <span style="color:var(--gold)">View →</span> for the full Redfin listing with photos. <em style="color:var(--gold2)">The $2.9M home you lost is in here -- scroll and you'll see it wasn't the only one.</em></p>
+  </div>
+  <div class="tbl-wrap">
+    <table class="prop" id="propTable">
+      <thead>
+        <tr>
+          <th data-col="address">Address</th>
+          <th data-col="type">Type</th>
+          <th data-col="price">Sold Price ↕</th>
+          <th data-col="beds">Bd</th>
+          <th data-col="baths">Ba</th>
+          <th data-col="sqft">Sq Ft</th>
+          <th data-col="ppsf">$/SqFt</th>
+          <th data-col="lot">Lot SF</th>
+          <th data-col="year">Built</th>
+          <th data-col="date">Sold</th>
+          <th>Link</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FOOTER -->
+
+<footer>
+  <div class="sig">Prepared for Jordyn & Trey with care.</div>
+  <div>76 sales recorded April 2025 -- April 2026 · Coconut Grove, Miami FL 33133<br>
+  Source: Redfin / Southeast Florida MLS · Data for informational purposes -- independently verify before making decisions.</div>
+</footer>
+
+<script>
+// ================================================================
+// DATA -- ALL 76 PROPERTIES
+// ================================================================
+const P = [
+  {address:"3166 Indiana St #I",price:1575000,beds:3,baths:2,sqft:2160,lot:null,year:2005,ppsf:729,date:"",url:"https://www.redfin.com/FL/Miami/3166-Indiana-St-33133/unit-I/home/43344297",lat:25.7322396,lng:-80.2469179,type:"Condo"},
+  {address:"2910 Calusa St",price:2120000,beds:4,baths:3,sqft:1839,lot:6500,year:1944,ppsf:1153,date:"2026-01-12",url:"https://www.redfin.com/FL/Miami/2910-Calusa-St-33133/home/43450851",lat:25.7385471,lng:-80.2335683,type:"SFH"},
+  {address:"170 Shore Dr S",price:2320000,beds:4,baths:3,sqft:2948,lot:9375,year:1955,ppsf:787,date:"",url:"https://www.redfin.com/FL/Miami/170-Shore-Dr-S-33133/home/42752699",lat:25.7458401,lng:-80.2182271,type:"SFH"},
+  {address:"1900 Tigertail Ave",price:1650000,beds:2,baths:2,sqft:1287,lot:10000,year:1941,ppsf:1282,date:"",url:"https://www.redfin.com/FL/Miami/1900-Tigertail-Ave-33133/home/42753889",lat:25.7399286,lng:-80.2256905,type:"SFH"},
+  {address:"2905 Calusa St",price:1850000,beds:3,baths:2,sqft:1772,lot:8861,year:1944,ppsf:1044,date:"",url:"https://www.redfin.com/FL/Miami/2905-Calusa-St-33133/home/42754927",lat:25.7387637,lng:-80.2331992,type:"SFH"},
+  {address:"95 W Shore Dr",price:2690000,beds:6,baths:5,sqft:3316,lot:11190,year:1958,ppsf:811,date:"2025-09-03",url:"https://www.redfin.com/FL/Miami/95-Shore-Dr-W-33133/home/42755161",lat:25.747587,lng:-80.216064,type:"SFH"},
+  {address:"2525 Swanson Ave",price:1850000,beds:4,baths:2,sqft:1710,lot:6953,year:1949,ppsf:1082,date:"",url:"https://www.redfin.com/FL/Miami/2525-Swanson-Ave-33133/home/42745923",lat:25.7365276,lng:-80.2355949,type:"SFH"},
+  {address:"1650 Tigertail Ave",price:2175000,beds:4,baths:3,sqft:2278,lot:7875,year:1953,ppsf:955,date:"2025-08-04",url:"https://www.redfin.com/FL/Miami/1650-Tigertail-Ave-33133/home/42751264",lat:25.7425177,lng:-80.2204509,type:"SFH"},
+  {address:"2550 Trapp Ave",price:1800000,beds:3,baths:2,sqft:1585,lot:6783,year:1944,ppsf:1136,date:"2026-04-01",url:"https://www.redfin.com/FL/Miami/2550-Trapp-Ave-33133/home/42753113",lat:25.7357119,lng:-80.2345009,type:"SFH"},
+  {address:"4110 El Prado Blvd",price:2000000,beds:3,baths:2,sqft:1745,lot:6500,year:1976,ppsf:1146,date:"2025-12-15",url:"https://www.redfin.com/FL/Miami/4110-El-Prado-Blvd-33133/home/42761239",lat:25.7173853,lng:-80.2598733,type:"SFH"},
+  {address:"4031 Woodridge Rd",price:2450000,beds:3,baths:4,sqft:2076,lot:9380,year:1947,ppsf:1180,date:"2025-07-16",url:"https://www.redfin.com/FL/Miami/4031-Woodridge-Rd-33133/home/42754282",lat:25.7106962,lng:-80.2581761,type:"SFH"},
+  {address:"3000 Blaine St",price:1500000,beds:3,baths:2,sqft:2027,lot:2991,year:1995,ppsf:740,date:"",url:"https://www.redfin.com/FL/Miami/3000-Blaine-St-33133/home/42761720",lat:25.7339745,lng:-80.2368232,type:"SFH"},
+  {address:"3545 E Glencoe St",price:2700000,beds:4,baths:3.5,sqft:3114,lot:4800,year:2010,ppsf:867,date:"2025-11-20",url:"https://www.redfin.com/FL/Miami/3545-E-Glencoe-St-33133/home/43434567",lat:25.7406296,lng:-80.2176816,type:"SFH"},
+  {address:"3240 Morris Ln",price:2985000,beds:3,baths:3,sqft:3001,lot:9140,year:1928,ppsf:995,date:"2025-04-22",url:"https://www.redfin.com/FL/Miami/3240-Morris-Ln-33133/home/42753006",lat:25.7373419,lng:-80.2280222,type:"SFH"},
+  {address:"2240 Tequesta Ln",price:2100000,beds:4,baths:3,sqft:1905,lot:5500,year:1947,ppsf:1102,date:"2026-03-05",url:"https://www.redfin.com/FL/Miami/2240-Tequesta-Ln-33133/home/42752514",lat:25.7400039,lng:-80.2307388,type:"SFH"},
+  {address:"110 W Shore Dr",price:2500000,beds:4,baths:4.5,sqft:3184,lot:11505,year:1955,ppsf:785,date:"2026-02-12",url:"https://www.redfin.com/FL/Miami/110-Shore-Dr-W-33133/home/42742701",lat:25.746635,lng:-80.2172283,type:"SFH"},
+  {address:"4190 Pamona Ave",price:1750000,beds:4,baths:3,sqft:1949,lot:9122,year:1955,ppsf:898,date:"2026-01-20",url:"https://www.redfin.com/FL/Miami/4190-Pamona-Ave-33133/home/42760743",lat:25.7189463,lng:-80.2610473,type:"SFH"},
+  {address:"4085 Battersea Rd",price:2565300,beds:4,baths:3,sqft:2708,lot:6500,year:1988,ppsf:947,date:"2025-05-23",url:"https://www.redfin.com/FL/Miami/4085-Battersea-Rd-33133/home/42759774",lat:25.7098094,lng:-80.2590146,type:"SFH"},
+  {address:"3765 Carmen Ct",price:2850000,beds:4,baths:3,sqft:2622,lot:8400,year:1936,ppsf:1087,date:"2026-01-27",url:"https://www.redfin.com/FL/Miami/3765-Carmen-Ct-33133/home/42753973",lat:25.7201668,lng:-80.2482532,type:"SFH"},
+  {address:"2975 Shipping Ave",price:1725000,beds:3,baths:1,sqft:1068,lot:6800,year:1949,ppsf:1615,date:"2025-08-15",url:"https://www.redfin.com/FL/Miami/2975-Shipping-Ave-33133/home/42748817",lat:25.7338553,lng:-80.2411149,type:"SFH"},
+  {address:"2210 Overbrook St",price:2600000,beds:4,baths:3.5,sqft:3113,lot:9000,year:1950,ppsf:835,date:"2025-06-16",url:"https://www.redfin.com/FL/Miami/2210-Overbrook-St-33133/home/42752504",lat:25.7392327,lng:-80.2302049,type:"SFH"},
+  {address:"4038 Ventura Ave",price:3150000,beds:4,baths:3.5,sqft:2868,lot:6500,year:1986,ppsf:1098,date:"2025-05-14",url:"https://www.redfin.com/FL/Miami/4038-Ventura-Ave-33133/home/42761718",lat:25.7183058,lng:-80.2579008,type:"SFH"},
+  {address:"2500 Tequesta Ln",price:1550000,beds:2,baths:1,sqft:1598,lot:6045,year:1953,ppsf:970,date:"",url:"https://www.redfin.com/FL/Miami/2500-Tequesta-Ln-33133/home/42754119",lat:25.7398445,lng:-80.2352464,type:"SFH"},
+  {address:"4050 Ventura Ave",price:2950000,beds:4,baths:4,sqft:3176,lot:6500,year:1989,ppsf:929,date:"2025-05-28",url:"https://www.redfin.com/FL/Miami/4050-Ventura-Ave-33133/home/42763247",lat:25.7182182,lng:-80.2582044,type:"SFH"},
+  {address:"4125 Poinciana Ave",price:2950000,beds:4,baths:3.5,sqft:3209,lot:7015,year:1998,ppsf:919,date:"2026-04-02",url:"https://www.redfin.com/FL/Miami/4125-Poinciana-Ave-33133/home/43409748",lat:25.7202536,lng:-80.259491,type:"SFH"},
+  {address:"218 S Shore Dr",price:2500000,beds:4,baths:3,sqft:2749,lot:8400,year:1953,ppsf:909,date:"2026-02-19",url:"https://www.redfin.com/FL/Miami/218-Shore-Dr-S-33133/home/42750135",lat:25.7441402,lng:-80.2167734,type:"SFH"},
+  {address:"2427 Tequesta Ln",price:1500000,beds:3,baths:2.5,sqft:1596,lot:3500,year:1982,ppsf:940,date:"2025-09-08",url:"https://www.redfin.com/FL/Miami/2427-Tequesta-Ln-33133/home/42747109",lat:25.7402021,lng:-80.2343331,type:"SFH"},
+  {address:"4141 Pamona Ave",price:1790000,beds:3,baths:2,sqft:1734,lot:6255,year:1976,ppsf:1032,date:"2026-01-12",url:"https://www.redfin.com/FL/Miami/4141-Pamona-Ave-33133/home/42760153",lat:25.7193931,lng:-80.2599813,type:"SFH"},
+  {address:"3220 Calusa St",price:3000000,beds:4,baths:4.5,sqft:3267,lot:8550,year:1955,ppsf:918,date:"2025-12-19",url:"https://www.redfin.com/FL/Miami/3220-Calusa-St-33133/home/42752541",lat:25.7355062,lng:-80.2313663,type:"SFH"},
+  {address:"3835 Utopia Ct",price:3100000,beds:3,baths:3,sqft:2474,lot:11026,year:1935,ppsf:1253,date:"2026-03-30",url:"https://www.redfin.com/FL/Miami/3835-Utopia-Ct-33133/home/42760638",lat:25.7170419,lng:-80.2560284,type:"SFH"},
+  {address:"3648 Loquat Ave",price:2848000,beds:4,baths:4.5,sqft:2934,lot:5250,year:2019,ppsf:971,date:"2025-09-22",url:"https://www.redfin.com/FL/Miami/3648-Loquat-Ave-33133/home/42757173",lat:25.723412,lng:-80.2519985,type:"SFH"},
+  {address:"2360 Tigertail Ave",price:2800000,beds:4,baths:3,sqft:2825,lot:8640,year:1987,ppsf:991,date:"2025-06-02",url:"https://www.redfin.com/FL/Miami/2360-Tigertail-Ave-33133/home/42753033",lat:25.7362107,lng:-80.2309629,type:"SFH"},
+  {address:"1648 Nocatee Dr",price:2685000,beds:3,baths:3.5,sqft:2913,lot:7383,year:1940,ppsf:922,date:"2026-04-13",url:"https://www.redfin.com/FL/Miami/1648-Nocatee-Dr-33133/home/42752259",lat:25.7445153,lng:-80.2201683,type:"SFH"},
+  {address:"3975 Utopia Ct",price:2650000,beds:3,baths:3.5,sqft:2374,lot:10133,year:1950,ppsf:1116,date:"2025-05-30",url:"https://www.redfin.com/FL/Miami/3975-Utopia-Ct-33133/home/42759184",lat:25.7168944,lng:-80.2554583,type:"SFH"},
+  {address:"3610 Battersea Rd",price:3200000,beds:4,baths:4.5,sqft:1918,lot:10400,year:2025,ppsf:1668,date:"2025-05-29",url:"https://www.redfin.com/FL/Miami/3610-Battersea-Rd-33133/home/42759407",lat:25.7099366,lng:-80.2501216,type:"SFH"},
+  {address:"3642 William Ave",price:2350000,beds:4,baths:3,sqft:1768,lot:null,year:2022,ppsf:1329,date:"2025-08-21",url:"https://www.redfin.com/FL/Miami/3642-William-Ave-33133/home/168018746",lat:25.7260414,lng:-80.251846,type:"SFH"},
+  {address:"3441 Charles Ave",price:2900000,beds:4,baths:4.5,sqft:3075,lot:5750,year:2015,ppsf:943,date:"2025-05-15",url:"https://www.redfin.com/FL/Miami/3441-Charles-Ave-33133/home/42757442",lat:25.7257826,lng:-80.2486064,type:"SFH"},
+  {address:"3610 Avocado Ave",price:3144000,beds:4,baths:4.5,sqft:2644,lot:10500,year:1945,ppsf:1189,date:"2026-02-02",url:"https://www.redfin.com/FL/Miami/3610-Avocado-Ave-33133/home/42755642",lat:25.7228504,lng:-80.2516663,type:"SFH"},
+  {address:"54 Bay Heights Dr",price:2830000,beds:3,baths:3.5,sqft:2392,lot:9826,year:1953,ppsf:1183,date:"2026-03-24",url:"https://www.redfin.com/FL/Miami/54-Bay-Heights-Dr-33133/home/42746638",lat:25.7449525,lng:-80.2159914,type:"SFH"},
+  {address:"4255 Lennox Dr",price:3000000,beds:4,baths:3.5,sqft:2855,lot:15647,year:1939,ppsf:1051,date:"2026-03-20",url:"https://www.redfin.com/FL/Miami/4255-Lennox-Dr-33133/home/42758899",lat:25.7117125,lng:-80.2559056,type:"SFH"},
+  {address:"3570 Avocado Ave",price:3183750,beds:3,baths:2.5,sqft:2385,lot:14000,year:1951,ppsf:1335,date:"2025-12-05",url:"https://www.redfin.com/FL/Miami/3570-Avocado-Ave-33133/home/42756162",lat:25.7228631,lng:-80.2502946,type:"SFH"},
+  {address:"3069 Hibiscus St",price:1800000,beds:3,baths:3.5,sqft:2038,lot:null,year:2025,ppsf:883,date:"2026-02-12",url:"https://www.redfin.com/FL/Miami/3069-Hibiscus-St-33133/home/198946062",lat:25.7337993,lng:-80.2500212,type:"SFH"},
+  {address:"3511 Royal Palm Ave",price:2750000,beds:2,baths:1,sqft:1080,lot:10500,year:1910,ppsf:2546,date:"",url:"https://www.redfin.com/FL/Miami/3511-Royal-Palm-Ave-33133/home/42758189",lat:25.7215667,lng:-80.2494046,type:"SFH"},
+  {address:"2475 S Bayshore Dr #2",price:2425000,beds:3,baths:3,sqft:2790,lot:5700,year:1980,ppsf:869,date:"2026-02-12",url:"https://www.redfin.com/FL/Miami/2475-S-Bayshore-Dr-33133/unit-2/home/42759786",lat:25.7348421,lng:-80.2323614,type:"SFH"},
+  {address:"2760 Kirk St",price:2600000,beds:4,baths:3,sqft:3334,lot:5000,year:2007,ppsf:780,date:"2025-08-25",url:"https://www.redfin.com/FL/Miami/2760-Kirk-St-33133/home/42751907",lat:25.7406309,lng:-80.2320509,type:"SFH"},
+  {address:"4150 Ventura Ave",price:1950000,beds:3,baths:3,sqft:1672,lot:6600,year:1945,ppsf:1166,date:"2026-02-06",url:"https://www.redfin.com/FL/Miami/4150-Ventura-Ave-33133/home/42762215",lat:25.718156,lng:-80.2603644,type:"SFH"},
+  {address:"3071 Orange St",price:1700000,beds:3,baths:3,sqft:2106,lot:null,year:2014,ppsf:807,date:"2026-01-08",url:"https://www.redfin.com/FL/Miami/3071-Orange-St-33133/home/42756361",lat:25.732906,lng:-80.243262,type:"SFH"},
+  {address:"3699 Loquat Ave",price:1800000,beds:3,baths:3,sqft:2171,lot:3932,year:2006,ppsf:829,date:"",url:"https://www.redfin.com/FL/Miami/3699-Loquat-Ave-33133/home/43280435",lat:25.7237019,lng:-80.2532286,type:"SFH"},
+  {address:"4313 Ingraham Hwy",price:2400000,beds:4,baths:3.5,sqft:2960,lot:6876,year:1988,ppsf:811,date:"2025-06-30",url:"https://www.redfin.com/FL/Miami/4313-Ingraham-Hwy-33133/home/42759433",lat:25.7107191,lng:-80.2554622,type:"SFH"},
+  {address:"3821 Carole Ct",price:2900000,beds:4,baths:3,sqft:4649,lot:10560,year:1966,ppsf:624,date:"",url:"https://www.redfin.com/FL/Miami/3821-Carole-Ct-33133/home/42753463",lat:25.7174659,lng:-80.2462219,type:"SFH"},
+  {address:"3520 Fair Isle St",price:2750000,beds:3,baths:3.5,sqft:3514,lot:6250,year:1980,ppsf:783,date:"2025-06-13",url:"https://www.redfin.com/FL/Miami/3520-Fair-Isle-St-33133/home/42743679",lat:25.7384094,lng:-80.2230685,type:"SFH"},
+  {address:"3141 Jefferson St",price:1993000,beds:3,baths:2,sqft:1199,lot:7750,year:1949,ppsf:1662,date:"2025-06-12",url:"https://www.redfin.com/FL/Miami/3141-Jefferson-St-33133/home/42754702",lat:25.7353438,lng:-80.2329471,type:"SFH"},
+  {address:"1771 Wa Kee Na Dr",price:1750000,beds:3,baths:2,sqft:2389,lot:5300,year:1947,ppsf:733,date:"2025-09-10",url:"https://www.redfin.com/FL/Miami/1771-Wa-Kee-Na-Dr-33133/home/42743763",lat:25.7447814,lng:-80.2238584,type:"SFH"},
+  {address:"3701 Solana Rd",price:2700000,beds:3,baths:2.5,sqft:2823,lot:5850,year:1987,ppsf:956,date:"2025-07-07",url:"https://www.redfin.com/FL/Miami/3701-Solana-Rd-33133/home/42755779",lat:25.7216932,lng:-80.2577366,type:"SFH"},
+  {address:"1774 Opechee Dr",price:1925000,beds:5,baths:3.5,sqft:2442,lot:6890,year:1924,ppsf:788,date:"2025-06-27",url:"https://www.redfin.com/FL/Miami/1774-Opechee-Dr-33133/home/42752831",lat:25.7435947,lng:-80.2231349,type:"SFH"},
+  {address:"4160 Ventura Ave",price:2500000,beds:4,baths:3.5,sqft:2976,lot:6700,year:1947,ppsf:840,date:"2025-05-07",url:"https://www.redfin.com/FL/Miami/4160-Ventura-Ave-33133/home/42761219",lat:25.7181379,lng:-80.2605134,type:"SFH"},
+  {address:"4131 Lybyer Ave",price:1750000,beds:3,baths:2,sqft:1738,lot:6375,year:1953,ppsf:1007,date:"2025-08-18",url:"https://www.redfin.com/FL/Miami/4131-Lybyer-Ave-33133/home/43381139",lat:25.7229554,lng:-80.2597205,type:"SFH"},
+  {address:"2478 Inagua Ave",price:2400000,beds:4,baths:3.5,sqft:2072,lot:6488,year:1924,ppsf:1158,date:"2025-09-30",url:"https://www.redfin.com/FL/Miami/2478-Inagua-Ave-33133/home/42755459",lat:25.7377079,lng:-80.2347398,type:"SFH"},
+  {address:"3650 N Bay Homes Dr",price:2460000,beds:3,baths:2.5,sqft:2219,lot:5150,year:1919,ppsf:1109,date:"2026-03-20",url:"https://www.redfin.com/FL/Miami/3650-N-Bay-Homes-Dr-33133/home/42753947",lat:25.7145767,lng:-80.2522381,type:"SFH"},
+  {address:"3730 Kumquat Ave",price:1880000,beds:4,baths:3.5,sqft:2961,lot:7150,year:1960,ppsf:635,date:"2026-01-15",url:"https://www.redfin.com/FL/Miami/3730-Kumquat-Ave-33133/home/42759216",lat:25.7241905,lng:-80.2540475,type:"SFH"},
+  {address:"3480 Oak Ave",price:2300000,beds:4,baths:4,sqft:2955,lot:4863,year:2021,ppsf:778,date:"2025-07-29",url:"https://www.redfin.com/FL/Miami/3480-Oak-Ave-33133/home/148491274",lat:25.7296802,lng:-80.2498541,type:"SFH"},
+  {address:"3540 E Glencoe St",price:1738000,beds:3,baths:2,sqft:1110,lot:7575,year:1952,ppsf:1566,date:"2025-05-30",url:"https://www.redfin.com/FL/Miami/3540-E-Glencoe-St-33133/home/42742747",lat:25.7404542,lng:-80.2180811,type:"SFH"},
+  {address:"212 Shore Dr S",price:3225000,beds:4,baths:3,sqft:2637,lot:8400,year:1953,ppsf:1223,date:"",url:"https://www.redfin.com/FL/Miami/212-Shore-Dr-S-33133/home/42750137",lat:25.744324,lng:-80.216895,type:"SFH"},
+  {address:"3390 Oak Ave",price:3000000,beds:4,baths:5,sqft:4081,lot:5366,year:2024,ppsf:735,date:"2025-05-30",url:"https://www.redfin.com/FL/Miami/3390-Oak-Ave-33133/home/42758954",lat:25.72972,lng:-80.248186,type:"SFH"},
+  {address:"2811 SW 22nd Ave",price:2900000,beds:3,baths:4,sqft:2879,lot:8960,year:1991,ppsf:1007,date:"2025-09-04",url:"https://www.redfin.com/FL/Miami/2811-SW-22nd-Ave-33133/home/42743965",lat:25.7392835,lng:-80.2293565,type:"SFH"},
+  {address:"1870 S Bayshore Dr",price:2775000,beds:5,baths:4.5,sqft:4611,lot:15625,year:1924,ppsf:602,date:"2026-01-08",url:"https://www.redfin.com/FL/Miami/1870-S-Bayshore-Dr-33133/home/42753700",lat:25.7387681,lng:-80.2233083,type:"SFH"},
+  {address:"3490 William Ave",price:1620000,beds:4,baths:2,sqft:1513,lot:5643,year:1964,ppsf:1071,date:"",url:"https://www.redfin.com/FL/Miami/3490-William-Ave-33133/home/42754445",lat:25.72616,lng:-80.2493423,type:"SFH"},
+  {address:"4050 Hardie Ave",price:2600000,beds:3,baths:2.5,sqft:2656,lot:6500,year:2008,ppsf:979,date:"2026-04-09",url:"https://www.redfin.com/FL/Miami/4050-Hardie-Ave-33133/home/42763302",lat:25.7124966,lng:-80.258349,type:"SFH"},
+  {address:"4160 Lybyer Ave",price:3200000,beds:5,baths:4.5,sqft:2700,lot:16766,year:1941,ppsf:1185,date:"2026-02-26",url:"https://www.redfin.com/FL/Miami/4160-Lybyer-Ave-33133/home/42754267",lat:25.722459,lng:-80.260593,type:"SFH"},
+  {address:"2000 S Bayshore Dr #47",price:3100000,beds:5,baths:4,sqft:3725,lot:null,year:1981,ppsf:832,date:"2026-04-14",url:"https://www.redfin.com/FL/Miami/2000-S-Bayshore-Dr-33133/unit-47/home/42755357",lat:25.736092,lng:-80.224858,type:"SFH"},
+  {address:"3111 Elizabeth St (Land)",price:2700000,beds:null,baths:null,sqft:null,lot:6250,year:null,ppsf:null,date:"2026-04-02",url:"https://www.redfin.com/FL/Miami/3111-Elizabeth-St-33133/home/42757110",lat:25.7331383,lng:-80.2482304,type:"Land"},
+  {address:"3551 E Glencoe St",price:2200000,beds:4,baths:3,sqft:2334,lot:7650,year:1957,ppsf:943,date:"2026-04-02",url:"https://www.redfin.com/FL/Miami/3551-E-Glencoe-St-33133/home/42752722",lat:25.7405189,lng:-80.2175535,type:"SFH"},
+  {address:"84 W Shore Dr",price:2175000,beds:4,baths:3,sqft:3090,lot:8625,year:1954,ppsf:704,date:"2026-01-21",url:"https://www.redfin.com/FL/Miami/84-Shore-Dr-W-33133/home/42753676",lat:25.7472226,lng:-80.2157266,type:"SFH"},
+  {address:"2465 Inagua Ave",price:1890000,beds:3,baths:1,sqft:1390,lot:6500,year:1925,ppsf:1360,date:"",url:"https://www.redfin.com/FL/Miami/2465-Inagua-Ave-33133/home/42750501",lat:25.7381575,lng:-80.2349397,type:"SFH"},
+  {address:"86 Bay Heights Dr",price:2000000,beds:3,baths:2,sqft:2974,lot:10103,year:1954,ppsf:672,date:"",url:"https://www.redfin.com/FL/Miami/86-Bay-Heights-Dr-33133/home/42742917",lat:25.7457935,lng:-80.2176818,type:"SFH"},
+  {address:"1601 Nocatee Dr",price:2550000,beds:4,baths:4,sqft:2974,lot:9958,year:1950,ppsf:857,date:"",url:"https://www.redfin.com/FL/Miami/1601-Nocatee-Dr-33133/home/42745285",lat:25.7456411,lng:-80.2193209,type:"SFH"}
+];
+
+// ================================================================
+// HELPERS
+// ================================================================
+function fmtM(n) {
+  if (n >= 1e6) {
+    var v = n / 1e6;
+    return '$' + (n % 1e6 === 0 ? v.toFixed(0) : v.toFixed(2).replace(/\.?0+$/, '')) + 'M';
+  }
+  return '$' + n.toLocaleString();
+}
+function fmtDate(s) {
+  if (!s) return '--';
+  var parts = s.split('-');
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[parseInt(parts[1],10)-1] + ' ' + parts[2] + ', ' + parts[0];
+}
+function pinColor(price) {
+  if (price < 2e6) return '#4CAF88';
+  if (price < 2.5e6) return '#5B9ED0';
+  if (price < 3e6) return '#C8A455';
+  return '#D4644A';
+}
+
+// ================================================================
+// STATS (runs immediately -- no external deps)
+// ================================================================
+var prices = P.map(function(p){return p.price;}).sort(function(a,b){return a-b;});
+var mid = Math.floor(prices.length/2);
+var median = prices.length%2===0 ? (prices[mid-1]+prices[mid])/2 : prices[mid];
+var ppsfVals = P.filter(function(p){return p.ppsf;}).map(function(p){return p.ppsf;});
+var avgPPSF = Math.round(ppsfVals.reduce(function(a,b){return a+b;},0)/ppsfVals.length);
+var sqftVals = P.filter(function(p){return p.sqft;}).map(function(p){return p.sqft;});
+var avgSqft = Math.round(sqftVals.reduce(function(a,b){return a+b;},0)/sqftVals.length);
+
+document.getElementById('s-median').textContent = fmtM(median);
+document.getElementById('s-ppsf').textContent = '$' + avgPPSF.toLocaleString();
+document.getElementById('s-sqft').textContent = avgSqft.toLocaleString() + ' sf';
+document.getElementById('s-range').textContent = fmtM(prices[0]) + '--' + fmtM(prices[prices.length-1]);
+
+// ================================================================
+// TABLE (runs immediately -- no external deps)
+// ================================================================
+var sortCol = 'price', sortDir = 1;
+
+function renderTable() {
+  var sorted = P.slice().sort(function(a,b){
+    var av = a[sortCol], bv = b[sortCol];
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+    return (av - bv) * sortDir;
+  });
+  var tbody = document.getElementById('tbody');
+  tbody.innerHTML = sorted.map(function(p){
+    var bClass = p.type==='SFH' ? 'b-sfh' : p.type==='Condo' ? 'b-condo' : 'b-land';
+    var dateDisp = p.date ? fmtDate(p.date) : '<span style="color:#5a7060">--</span>';
+    return '<tr>'
+      + '<td>' + p.address + '</td>'
+      + '<td><span class="badge ' + bClass + '">' + p.type + '</span></td>'
+      + '<td><strong>' + fmtM(p.price) + '</strong></td>'
+      + '<td class="dim">' + (p.beds != null ? p.beds : '--') + '</td>'
+      + '<td class="dim">' + (p.baths != null ? p.baths : '--') + '</td>'
+      + '<td class="dim">' + (p.sqft ? p.sqft.toLocaleString() : '--') + '</td>'
+      + '<td class="dim">' + (p.ppsf ? '$' + p.ppsf.toLocaleString() : '--') + '</td>'
+      + '<td class="dim">' + (p.lot ? p.lot.toLocaleString() : '--') + '</td>'
+      + '<td class="dim">' + (p.year != null ? p.year : '--') + '</td>'
+      + '<td class="dim" style="white-space:nowrap">' + dateDisp + '</td>'
+      + '<td><a class="vlink" href="' + p.url + '" target="_blank" rel="noopener">View →</a></td>'
+      + '</tr>';
+  }).join('');
+}
+
+document.querySelectorAll('table.prop th[data-col]').forEach(function(th){
+  th.addEventListener('click', function(){
+    var col = th.dataset.col;
+    if (col === sortCol) { sortDir *= -1; } else { sortCol = col; sortDir = 1; }
+    document.querySelectorAll('table.prop th').forEach(function(t){ t.style.color = ''; });
+    th.style.color = '#E2C880';
+    renderTable();
+  });
+});
+
+renderTable();
+
+// ================================================================
+// MAP + CHARTS -- wrapped in window.load with fallback handling
+// ================================================================
+var FALLBACK_STYLE = 'display:flex;align-items:center;justify-content:center;'
+  + 'height:100%;color:#A8B89A;font-size:14px;text-align:center;padding:20px;'
+  + 'border:1px dashed rgba(160,210,150,0.2);border-radius:8px;';
+
+window.addEventListener('load', function() {
+
+  // ---- MAP ----
+  try {
+    if (typeof L === 'undefined') throw new Error('Leaflet not available');
+    var mapEl = document.getElementById('map');
+    var lmap = L.map(mapEl, {zoomControl:true}).setView([25.727, -80.242], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution:'© OpenStreetMap © CARTO', maxZoom:19
+    }).addTo(lmap);
+    P.forEach(function(p) {
+      var color = pinColor(p.price);
+      var icon = L.divIcon({
+        className:'',
+        html:'<div style="width:14px;height:14px;border-radius:50%;background:' + color
+          + ';border:2px solid rgba(255,255,255,0.6);box-shadow:0 2px 8px rgba(0,0,0,.5)"></div>',
+        iconSize:[14,14], iconAnchor:[7,7]
+      });
+      var detail = p.sqft
+        ? (p.beds||'?') + 'bd / ' + (p.baths||'?') + 'ba · ' + p.sqft.toLocaleString() + ' sqft' + (p.ppsf ? ' · $' + p.ppsf + '/sf' : '')
+        : 'Land / no structures';
+      var dateStr = p.date ? '<div style="font-size:11px;color:#8ba89a;margin-bottom:8px">Sold ' + fmtDate(p.date) + '</div>' : '';
+      var mk = L.marker([p.lat, p.lng], {icon:icon}).addTo(lmap);
+      mk.bindPopup(
+        '<div class="pu-addr">' + p.address + ', Miami FL</div>'
+        + '<div class="pu-price">' + fmtM(p.price) + '</div>'
+        + '<div class="pu-detail">' + detail + '</div>'
+        + dateStr
+        + '<a class="pu-lnk" href="' + p.url + '" target="_blank" rel="noopener">View on Redfin →</a>',
+        {maxWidth:240}
+      );
+    });
+  } catch(e) {
+    var mapDiv = document.getElementById('map');
+    if (mapDiv) mapDiv.innerHTML = '<div style="' + FALLBACK_STYLE + '">Map loads when opened in a browser.<br><small>Open this file in Chrome or Safari to see all 76 pins.</small></div>';
+  }
+
+  // ---- CHARTS ----
+  try {
+    if (typeof Chart === 'undefined') throw new Error('Chart.js not available');
+
+    Chart.defaults.color = '#A8B89A';
+    Chart.defaults.font.family = "'DM Sans', system-ui, sans-serif";
+    Chart.defaults.font.size = 12;
+
+    var gridColor = 'rgba(160,210,150,0.07)';
+    var GOLD = '#C8A455', TEAL = '#5BA08A', BLUE = '#5B9ED0';
+
+    function baseScales() {
+      return {
+        x: {grid:{color:gridColor}, ticks:{color:'#A8B89A'}},
+        y: {grid:{color:gridColor}, ticks:{color:'#A8B89A'}}
+      };
+    }
+    function baseTip(extra) {
+      return Object.assign({
+        backgroundColor:'rgba(21,43,30,0.95)',
+        borderColor:'rgba(200,164,85,.3)', borderWidth:1,
+        titleColor:'#E2C880', bodyColor:'#A8B89A',
+        padding:10, cornerRadius:6
+      }, extra || {});
+    }
+
+    // Chart 1 -- Price Range
+    (function(){
+      var buckets = ['$1.75--2M','$2--2.25M','$2.25--2.5M','$2.5--2.75M','$2.75--3M','$3M--3.25M'];
+      var limits = [1750000,2000000,2250000,2500000,2750000,3000000,Infinity];
+      var counts = new Array(6).fill(0);
+      P.forEach(function(p){ for(var i=0;i<6;i++){ if(p.price>=limits[i]&&p.price<limits[i+1]){counts[i]++;break;} } });
+      new Chart(document.getElementById('cPriceRange'),{
+        type:'bar',
+        data:{labels:buckets,datasets:[{data:counts,
+          backgroundColor:['rgba(76,175,136,.75)','rgba(91,158,208,.8)','rgba(91,158,208,.65)','rgba(200,164,85,.75)','rgba(200,164,85,.6)','rgba(212,100,74,.8)'],
+          borderRadius:5,borderSkipped:false}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:baseTip({callbacks:{label:function(c){return '  '+c.parsed.y+' sales';}}})},
+          scales:baseScales()}
+      });
+    })();
+
+    // Chart 2 -- $/sqft
+    (function(){
+      var labels=['<$700','$700--800','$800--900','$900--1k','$1k--1.1k','$1.1k--1.2k','$1.2k+'];
+      var limits=[0,700,800,900,1000,1100,1200,Infinity];
+      var counts=new Array(7).fill(0);
+      P.filter(function(p){return p.ppsf;}).forEach(function(p){ for(var i=0;i<7;i++){ if(p.ppsf>=limits[i]&&p.ppsf<limits[i+1]){counts[i]++;break;} } });
+      new Chart(document.getElementById('cPPSF'),{
+        type:'bar',
+        data:{labels:labels,datasets:[{data:counts,backgroundColor:'rgba(91,160,138,.75)',hoverBackgroundColor:TEAL,borderRadius:4,borderSkipped:false}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:baseTip({callbacks:{label:function(c){return '  '+c.parsed.y+' sales';}}})},
+          scales:baseScales()}
+      });
+    })();
+
+    // Chart 3 -- Home Size
+    (function(){
+      var labels=['<1,500','1,500--2k','2k--2,500','2,500--3k','3k--3,500','3,500+'];
+      var limits=[0,1500,2000,2500,3000,3500,Infinity];
+      var counts=new Array(6).fill(0);
+      P.filter(function(p){return p.sqft;}).forEach(function(p){ for(var i=0;i<6;i++){ if(p.sqft>=limits[i]&&p.sqft<limits[i+1]){counts[i]++;break;} } });
+      new Chart(document.getElementById('cSqft'),{
+        type:'bar',
+        data:{labels:labels,datasets:[{data:counts,backgroundColor:'rgba(91,158,208,.75)',hoverBackgroundColor:BLUE,borderRadius:4,borderSkipped:false}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:baseTip({callbacks:{label:function(c){return '  '+c.parsed.y+' homes';}}})},
+          scales:baseScales()}
+      });
+    })();
+
+    // Chart 4 -- Bedrooms doughnut
+    (function(){
+      var bedsMap = {};
+      P.filter(function(p){return p.beds;}).forEach(function(p){
+        var k = p.beds >= 5 ? '5+' : String(p.beds);
+        bedsMap[k] = (bedsMap[k]||0)+1;
+      });
+      var labels = Object.keys(bedsMap).sort();
+      var counts = labels.map(function(k){return bedsMap[k];});
+      new Chart(document.getElementById('cBeds'),{
+        type:'doughnut',
+        data:{labels:labels.map(function(l){return l+' bed';}),
+          datasets:[{data:counts,
+            backgroundColor:['rgba(76,175,136,.8)','rgba(91,158,208,.8)','rgba(200,164,85,.85)','rgba(212,100,74,.8)','rgba(154,128,208,.8)'],
+            borderColor:'#091710',borderWidth:3,hoverOffset:6}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{
+            legend:{display:true,position:'right',labels:{color:'#A8B89A',padding:12,font:{size:12}}},
+            tooltip:baseTip({callbacks:{label:function(c){return '  '+c.parsed+' homes';}}})
+          }}
+      });
+    })();
+
+    // Chart 5 -- Monthly volume
+    (function(){
+      var mLabels=["Apr '25","May '25","Jun '25","Jul '25","Aug '25","Sep '25","Oct '25","Nov '25","Dec '25","Jan '26","Feb '26","Mar '26","Apr '26"];
+      var mMap={"2025-04":0,"2025-05":1,"2025-06":2,"2025-07":3,"2025-08":4,"2025-09":5,"2025-10":6,"2025-11":7,"2025-12":8,"2026-01":9,"2026-02":10,"2026-03":11,"2026-04":12};
+      var counts=new Array(13).fill(0);
+      P.filter(function(p){return p.date;}).forEach(function(p){
+        var k=p.date.slice(0,7);
+        if(mMap[k]!==undefined) counts[mMap[k]]++;
+      });
+      new Chart(document.getElementById('cMonthly'),{
+        type:'bar',
+        data:{labels:mLabels,datasets:[{data:counts,
+          backgroundColor:counts.map(function(_,i){return (i===9||i===10)?'rgba(200,164,85,.85)':'rgba(91,160,138,.7)';}),
+          borderRadius:4,borderSkipped:false}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:baseTip({callbacks:{label:function(c){return '  '+c.parsed.y+' closings';}}})},
+          scales:baseScales()}
+      });
+    })();
+
+    // Chart 6 -- Era
+    (function(){
+      var eras=['Pre-1930','1930--50','1950--70','1970--90','1990--2010','2010+'];
+      var counts=new Array(6).fill(0);
+      P.filter(function(p){return p.year;}).forEach(function(p){
+        var y=p.year;
+        if(y<1930)counts[0]++;
+        else if(y<1950)counts[1]++;
+        else if(y<1970)counts[2]++;
+        else if(y<1990)counts[3]++;
+        else if(y<2010)counts[4]++;
+        else counts[5]++;
+      });
+      new Chart(document.getElementById('cEra'),{
+        type:'bar',
+        data:{labels:eras,datasets:[{data:counts,
+          backgroundColor:['rgba(154,128,208,.8)','rgba(154,128,208,.7)','rgba(91,158,208,.75)','rgba(91,160,138,.75)','rgba(200,164,85,.75)','rgba(212,100,74,.8)'],
+          borderRadius:4,borderSkipped:false}]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:baseTip({callbacks:{label:function(c){return '  '+c.parsed.y+' homes';}}})},
+          scales:baseScales()}
+      });
+    })();
+
+  } catch(e) {
+    document.querySelectorAll('.ch-wrap').forEach(function(el){
+      el.innerHTML = '<div style="' + FALLBACK_STYLE + '">Charts load when opened in a browser.<br><small>Download and open this file in Chrome or Safari.</small></div>';
+    });
+  }
+
+}); // end window.load
+</script>
+
+</body>
+</html>
